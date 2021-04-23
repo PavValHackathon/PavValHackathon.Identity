@@ -1,10 +1,14 @@
-﻿using GodelTech.Microservices.Core;
+﻿using System.Reflection;
+using GodelTech.Microservices.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PavValHackathon.Identity.Domain;
+using PavValHackathon.Identity.Utils;
+using PavValHackathon.Identity.v1.Factories;
 
 namespace PavValHackathon.Identity.Host
 {
@@ -22,7 +26,10 @@ namespace PavValHackathon.Identity.Host
 
         public override void ConfigureServices(IServiceCollection services)
         {
-            var connectionString = Configuration.GetConnectionString("DefaultConnection");
+            services.AddTransient<IUserClaimsPrincipalFactory<ApplicationUser>, ApplicationUserPrincipalFactory>();
+            var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
+            
+            var connectionString = Configuration.GetMasterConnectionString();
             
             services.AddIdentityServer(options =>
                 {
@@ -35,11 +42,11 @@ namespace PavValHackathon.Identity.Host
                 .AddAspNetIdentity<ApplicationUser>()
                 .AddConfigurationStore(options =>
                 {
-                    options.ConfigureDbContext = optionsBuilder => optionsBuilder.UseSqlServer(connectionString);
+                    options.ConfigureDbContext = optionsBuilder => optionsBuilder.UseSqlServer(connectionString, o => o.MigrationsAssembly(migrationsAssembly));
                 })
                 .AddOperationalStore(options =>
                 {
-                    options.ConfigureDbContext = dbContextOptionsBuilder => dbContextOptionsBuilder.UseSqlServer(connectionString);
+                    options.ConfigureDbContext = dbContextOptionsBuilder => dbContextOptionsBuilder.UseSqlServer(connectionString, o => o.MigrationsAssembly(migrationsAssembly));
                 })
                 .AddDeveloperSigningCredential();
         }

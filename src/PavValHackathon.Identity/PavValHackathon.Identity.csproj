@@ -29,7 +29,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Modules" />
     <Folder Include="v1\Controllers" />
   </ItemGroup>
 
